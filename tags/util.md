@@ -6,6 +6,10 @@ _Back to [all tags](../README.md)._
 
 ## Gists
 
+- [png2jpg-ffmpeg-help.sh](https://gist.github.com/adrenak/d81f2d6bb55f1468fc6ca260ea691542)
+  Help section for optionless png2jpg-ffmpeg variants
+  Tags: `image`, `cli`
+  Updated: 2026-05-21
 - [png2jpg-ffmpeg-high.sh](https://gist.github.com/adrenak/c0a47dc48f89580bca65417915fd70d8)
   Optionless png2jpg-ffmpeg variant for high quality output
   Tags: `image`, `cli`
