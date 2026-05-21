@@ -1,0 +1,10 @@
+{
+  "username": "adrenak",
+  "includePrivate": false,
+  "includeUntagged": true,
+  "sortTagsBy": "alphabetical",
+  "sortGistsBy": "updated-desc",
+  "showUpdatedDate": true,
+  "showSecondaryTags": true,
+  "generatedFileHeader": "<!-- This file is auto-generated. Do not edit manually. -->"
+}

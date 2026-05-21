@@ -1,0 +1,13 @@
+{
+  "name": "adrenak.gists",
+  "version": "1.0.0",
+  "description": "A GitHub-native browsable index for your GitHub Gists",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "update": "node scripts/update-index.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
