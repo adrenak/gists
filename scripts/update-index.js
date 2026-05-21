@@ -265,33 +265,36 @@ function buildTagPageGenerated(tag, gists, config) {
     return isUntagged ? "_No untagged gists._" : "_No gists with this tag._";
   }
 
-  return sorted.map((gist) => buildGistLine(gist, config, tag)).join("\n");
+  return sorted.map((gist) => buildGistBlock(gist, config, tag)).join("\n\n");
 }
 
-function buildGistLine(gist, config, currentTag) {
+function buildGistBlock(gist, config, currentTag) {
   const { title, tags, about } = parseGistDescription(
     gist.description,
     gist
   );
   const url = gist.html_url;
-  const lines = [`- [${title}](${url})`];
-  if (about) lines.push(`  ${about}`);
+  const lines = [`### [${title}](${url})`];
 
-  const extras = [];
+  if (about) {
+    lines.push("", about);
+  }
+
+  const meta = [];
   const isUntaggedPage = currentTag === UNTAGGED_KEY;
   if (config.showSecondaryTags && !isUntaggedPage && tags.length > 0) {
     const allTags = [...tags].sort((a, b) => a.localeCompare(b));
     const tagLinks = allTags
       .map((t) => `[${t}](${tagToSlug(t)}.md)`)
       .join(", ");
-    extras.push(`All Tags: ${tagLinks}`);
+    meta.push(`- **All tags:** ${tagLinks}`);
   }
   if (config.showUpdatedDate && gist.updated_at) {
-    extras.push(`Updated: ${formatDate(gist.updated_at)}`);
+    meta.push(`- **Updated:** ${formatDate(gist.updated_at)}`);
   }
 
-  for (const extra of extras) {
-    lines.push(`  ${extra}`);
+  if (meta.length > 0) {
+    lines.push("", meta.join("\n"));
   }
 
   return lines.join("\n");

@@ -69,9 +69,12 @@ Use `(tags:python, cli)` instead.
 ### Rendered entry on a tag page
 
 ```markdown
-- [Bulk rename utility](https://gist.github.com/you/abc123) — Recursively rename files by pattern
-  Tags: `automation`
-  Updated: 2026-05-21
+### [Bulk rename utility](https://gist.github.com/you/abc123)
+
+Recursively rename files by pattern
+
+- **All tags:** [automation](automation.md), [powershell](powershell.md)
+- **Updated:** 2026-05-21
 ```
 
 ---
