@@ -8,7 +8,7 @@ You can just fork this repo and `github.com/<your_username>/gists` would show _y
 
 ## Tags
 
-_Last updated: 2026-05-21 20:02 UTC_
+_Last updated: 2026-05-21 20:12 UTC_
 
 - [util](tags/util.md) — 13 gists
 - [cli](tags/cli.md) — 11 gists
@@ -17,3 +17,4 @@ _Last updated: 2026-05-21 20:02 UTC_
 - [devex](tags/devex.md) — 2 gists
 - [univoice](tags/univoice.md) — 1 gist
 - [voip](tags/voip.md) — 1 gist
+- [Untagged](tags/untagged.md) — 1 gist
