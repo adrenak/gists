@@ -4,6 +4,7 @@ import path from "node:path";
 const HTML_MARKER = "<!-- gists-index:auto -->";
 const CSS_MARKER = "/* gists-index:auto */";
 const TEMPLATES_DIR_NAME = "templates";
+const INDEX_FOOTER_HTML = `<footer><a href="https://github.com/adrenak/gists" target="_blank" rel="noopener noreferrer">Get your own Gists page</a></footer>`;
 
 const PAGES_DEFAULTS = {
   backgroundColor: "#fafafa",
@@ -71,8 +72,14 @@ h1 { font-size: 1.5rem; font-weight: 600; margin: 0 0 0.5rem; }
 }
 .tag-list a { font-weight: 500; }
 .count { color: var(--text-secondary); font-size: 0.875rem; }
-.gist-list a { font-weight: 500; }
-.about { color: var(--text-secondary); }
+.gist-title { margin: 0 0 0.25rem; }
+.gist-title a { font-weight: 500; }
+.gist-list .about {
+  color: var(--text-secondary);
+  font-size: 0.9375rem;
+  margin: 0 0 0.35rem;
+  line-height: 1.45;
+}
 .meta { font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.2rem; }
 .empty { color: var(--text-secondary); font-style: italic; }
 footer { margin-top: 2rem; font-size: 0.75rem; color: var(--text-secondary); }
@@ -102,13 +109,24 @@ async function renderHtmlTemplate(templatesDir, templateName, placeholders) {
   return result.endsWith("\n") ? result : `${result}\n`;
 }
 
-function htmlPage({ title, subtitle, backHref, backLabel, body, username }) {
+function htmlPage({
+  title,
+  subtitle,
+  backHref,
+  backLabel,
+  body,
+  username,
+  footerHtml,
+}) {
   const back = backHref
     ? `<a class="back" href="${escapeHtml(backHref)}">← ${escapeHtml(backLabel)}</a>`
     : "";
   const gistHub = username
     ? `https://gist.github.com/${encodeURIComponent(username)}`
     : "https://gist.github.com";
+  const footer =
+    footerHtml ??
+    `<footer><a href="${escapeHtml(gistHub)}" target="_blank" rel="noopener noreferrer">Gists on GitHub</a></footer>`;
   return `${HTML_MARKER}
 <!DOCTYPE html>
 <html lang="en">
@@ -123,7 +141,7 @@ function htmlPage({ title, subtitle, backHref, backLabel, body, username }) {
   <h1>${escapeHtml(title)}</h1>
   ${subtitle ? `<p class="subtitle">${escapeHtml(subtitle)}</p>` : ""}
   ${body}
-  <footer><a href="${escapeHtml(gistHub)}" target="_blank" rel="noopener noreferrer">Gists on GitHub</a></footer>
+  ${footer}
 </body>
 </html>
 `;
@@ -168,8 +186,8 @@ function buildGistListHtml(gists, config, currentTag, helpers) {
     );
     const url = escapeHtml(gist.html_url);
     const titleEsc = escapeHtml(title);
-    let html = `<li><a href="${url}" target="_blank" rel="noopener noreferrer">${titleEsc}</a>`;
-    if (about) html += `<span class="about"> — ${escapeHtml(about)}</span>`;
+    let html = `<li><div class="gist-title"><a href="${url}" target="_blank" rel="noopener noreferrer">${titleEsc}</a></div>`;
+    if (about) html += `<p class="about">${escapeHtml(about)}</p>`;
 
     const meta = [];
     if (config.showSecondaryTags && !isUntagged) {
@@ -306,6 +324,7 @@ export async function generateHtmlSite(
       backLabel: null,
       body: `<p class="intro">A browsable index of ${gistsLink}.</p><p class="updated">Last updated: ${escapeHtml(updatedAt)}</p>${tagListHtml}`,
       username: config.username,
+      footerHtml: INDEX_FOOTER_HTML,
     });
 
   await fs.writeFile(path.join(docsDir, "index.html"), indexHtml, "utf8");

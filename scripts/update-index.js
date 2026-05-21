@@ -274,8 +274,8 @@ function buildGistLine(gist, config, currentTag) {
     gist
   );
   const url = gist.html_url;
-  let line = `- [${title}](${url})`;
-  if (about) line += ` — ${about}`;
+  const lines = [`- [${title}](${url})`];
+  if (about) lines.push(`  ${about}`);
 
   const extras = [];
   const isUntaggedPage = currentTag === UNTAGGED_KEY;
@@ -289,11 +289,11 @@ function buildGistLine(gist, config, currentTag) {
     extras.push(`Updated: ${formatDate(gist.updated_at)}`);
   }
 
-  if (extras.length) {
-    line += "  \n  " + extras.join("  \n  ");
+  for (const extra of extras) {
+    lines.push(`  ${extra}`);
   }
 
-  return line;
+  return lines.join("\n");
 }
 
 async function generateReadme(tagMap, config, updatedAt) {
