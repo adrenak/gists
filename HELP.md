@@ -92,7 +92,7 @@ Use `(tags:python, cli)` instead.
 
 4. **Push** and enable **Actions** for the repo.
 
-5. **Run** **Actions → Update Gist Index → Run workflow** (or wait for the 30-minute schedule).
+5. **Run** **Actions → Update Gist Index → Run workflow** (or wait for the daily schedule).
 
 6. Open **`README.md`** to browse the index.
 
@@ -113,7 +113,8 @@ _Run the update workflow or `npm run update` after configuring `config.json` to 
 | `sortGistsBy` | `updated-desc` | Newest-updated gists first on tag pages |
 | `showUpdatedDate` | `true` | Show `Updated: YYYY-MM-DD` per gist |
 | `showSecondaryTags` | `true` | Show other tags on each line |
-| `generatedFileHeader` | HTML comment | Marks auto-generated files (do not remove) |
+| `generateHtml` | `true` | Generate `docs/` HTML for GitHub Pages |
+| `generatedFileHeader` | HTML comment | Marks auto-generated Markdown (do not remove) |
 
 ---
 
@@ -150,7 +151,7 @@ GIST_TOKEN=ghp_xxx node scripts/update-index.js
 Gist descriptions with (tags:...) and (about:...)
         │
         ▼
-GitHub Actions (every 30 min or manual)
+GitHub Actions (daily or manual)
         │
         ▼
 scripts/update-index.js → README.md + tags/*.md → auto-commit
@@ -194,15 +195,24 @@ Optional `templates/UNTAGGED.md` for the untagged page layout (only needs `[GENE
 ```text
 gists/
 ├── README.md              ← generated index
-├── tags/                  ← generated tag pages
-├── templates/             ← customize layout
+├── tags/                  ← generated Markdown tag pages
+├── docs/                  ← generated HTML (GitHub Pages)
+├── templates/             ← customize Markdown layout
 ├── HELP.md
 ├── config.json
 ├── scripts/update-index.js
 └── .github/workflows/update.yml
 ```
 
-See [docs/spec.md](docs/spec.md) for architecture and implementation details.
+## GitHub Pages (HTML site)
+
+Each index run generates a minimal site under **`docs/`** (when `generateHtml` is true in `config.json`).
+
+1. **Enable Pages:** Repo **Settings → Pages → Deploy from branch → `/docs` folder → Save.**
+2. Open **`https://<username>.github.io/<repo-name>/`** (e.g. `…/gists/` if your repo is named `gists`).
+3. Custom domains: configure in Pages settings; path stays `/` for root or use your repo name as the path segment.
+
+Gist titles open the GitHub gist in a **new tab**. Stale HTML tag pages are removed automatically when tags are dropped.
 
 ## Disclosure
 

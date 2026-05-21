@@ -6,5 +6,6 @@
   "sortGistsBy": "updated-desc",
   "showUpdatedDate": true,
   "showSecondaryTags": true,
+  "generateHtml": true,
   "generatedFileHeader": "<!-- This file is auto-generated. Do not edit manually. -->"
 }

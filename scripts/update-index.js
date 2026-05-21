@@ -1,12 +1,14 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { generateHtmlSite } from "./html.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
 const TAGS_DIR = path.join(ROOT, "tags");
 const TAGS_PREFIX = "tags/";
 const TEMPLATES_DIR = path.join(ROOT, "templates");
+const DOCS_DIR = path.join(ROOT, "docs");
 const GENERATED_MARKER = "[GENERATED]";
 
 /** Only `(tags:...)` is supported for tagging — not hashtags like #python. */
@@ -27,6 +29,7 @@ const DEFAULTS = {
   sortGistsBy: "updated-desc",
   showUpdatedDate: true,
   showSecondaryTags: true,
+  generateHtml: true,
   generatedFileHeader:
     "<!-- This file is auto-generated. Do not edit manually. -->",
 };
@@ -445,6 +448,22 @@ async function main() {
   }
 
   if (await cleanupLegacyRootTagPages(config)) changed = true;
+
+  if (config.generateHtml !== false) {
+    const htmlHelpers = {
+      parseGistDescription,
+      sortGists,
+      sortTags,
+      formatDate,
+      tagToSlug,
+      UNTAGGED_KEY,
+      UNTAGGED_LABEL,
+      UNTAGGED_SLUG,
+    };
+    if (await generateHtmlSite(tagMap, config, updatedAt, DOCS_DIR, htmlHelpers)) {
+      changed = true;
+    }
+  }
 
   const tagCount = tagMap.size - (tagMap.has(UNTAGGED_KEY) ? 1 : 0);
   const untaggedCount = untaggedGists.length;
