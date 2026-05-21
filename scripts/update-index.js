@@ -279,11 +279,12 @@ function buildGistLine(gist, config, currentTag) {
 
   const extras = [];
   const isUntaggedPage = currentTag === UNTAGGED_KEY;
-  if (config.showSecondaryTags && !isUntaggedPage) {
-    const others = tags.filter((t) => t !== currentTag);
-    if (others.length) {
-      extras.push(`Tags: ${others.map((t) => `\`${t}\``).join(", ")}`);
-    }
+  if (config.showSecondaryTags && !isUntaggedPage && tags.length > 0) {
+    const allTags = [...tags].sort((a, b) => a.localeCompare(b));
+    const tagLinks = allTags
+      .map((t) => `[${t}](${tagToSlug(t)}.md)`)
+      .join(", ");
+    extras.push(`All Tags: ${tagLinks}`);
   }
   if (config.showUpdatedDate && gist.updated_at) {
     extras.push(`Updated: ${formatDate(gist.updated_at)}`);

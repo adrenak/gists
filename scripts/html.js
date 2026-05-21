@@ -81,6 +81,8 @@ h1 { font-size: 1.5rem; font-weight: 600; margin: 0 0 0.5rem; }
   line-height: 1.45;
 }
 .meta { font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.2rem; }
+.meta-line + .meta-line { margin-top: 0.2rem; }
+.meta a { color: var(--link); }
 .empty { color: var(--text-secondary); font-style: italic; }
 footer { margin-top: 2rem; font-size: 0.75rem; color: var(--text-secondary); }
 `;
@@ -166,8 +168,14 @@ function buildHtmlTagList(tagEntries, helpers) {
 }
 
 function buildGistListHtml(gists, config, currentTag, helpers) {
-  const { parseGistDescription, sortGists, formatDate, UNTAGGED_KEY, gistHasNoTags } =
-    helpers;
+  const {
+    parseGistDescription,
+    sortGists,
+    formatDate,
+    UNTAGGED_KEY,
+    gistHasNoTags,
+    tagHtmlSlug,
+  } = helpers;
   const isUntagged = currentTag === UNTAGGED_KEY;
 
   const sorted = sortGists(gists, config.sortGistsBy).filter((gist) => {
@@ -189,17 +197,23 @@ function buildGistListHtml(gists, config, currentTag, helpers) {
     let html = `<li><div class="gist-title"><a href="${url}" target="_blank" rel="noopener noreferrer">${titleEsc}</a></div>`;
     if (about) html += `<p class="about">${escapeHtml(about)}</p>`;
 
-    const meta = [];
-    if (config.showSecondaryTags && !isUntagged) {
-      const others = tags.filter((t) => t !== currentTag);
-      if (others.length) {
-        meta.push(`Tags: ${others.map((t) => escapeHtml(t)).join(", ")}`);
-      }
+    const metaLines = [];
+    if (config.showSecondaryTags && !isUntagged && tags.length > 0) {
+      const allTags = [...tags].sort((a, b) => a.localeCompare(b));
+      const tagLinks = allTags
+        .map((t) => {
+          const slug = tagHtmlSlug(t, helpers);
+          return `<a href="${escapeHtml(slug)}.html">${escapeHtml(t)}</a>`;
+        })
+        .join(", ");
+      metaLines.push(`All Tags: ${tagLinks}`);
     }
     if (config.showUpdatedDate && gist.updated_at) {
-      meta.push(`Updated: ${formatDate(gist.updated_at)}`);
+      metaLines.push(`Updated: ${formatDate(gist.updated_at)}`);
     }
-    if (meta.length) html += `<div class="meta">${meta.join(" · ")}</div>`;
+    if (metaLines.length) {
+      html += `<div class="meta">${metaLines.map((line) => `<div class="meta-line">${line}</div>`).join("")}</div>`;
+    }
     html += "</li>";
     return html;
   });

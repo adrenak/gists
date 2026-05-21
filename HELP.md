@@ -112,7 +112,7 @@ _Run the update workflow or `npm run update` after configuring `config.json` to 
 | `sortTagsBy` | `alphabetical` | Tag order on the index (see below) |
 | `sortGistsBy` | `updated-desc` | Newest-updated gists first on tag pages |
 | `showUpdatedDate` | `true` | Show `Updated: YYYY-MM-DD` per gist |
-| `showSecondaryTags` | `true` | Show other tags on each line |
+| `showSecondaryTags` | `true` | Show all tags per gist on tag pages (`All Tags:`, A–Z, clickable) |
 | `generateHtml` | `true` | Generate `docs/` HTML for GitHub Pages |
 | `generatedFileHeader` | HTML comment | Marks auto-generated Markdown (do not remove) |
 
