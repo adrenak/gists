@@ -109,12 +109,31 @@ _Run the update workflow or `npm run update` after configuring `config.json` to 
 | `username` | — | GitHub user whose **public** gists to index |
 | `includePrivate` | `false` | Index private gists (requires `GIST_TOKEN`) |
 | `includeUntagged` | `true` | List gists without `(tags:...)` on `tags/untagged.md` |
-| `sortTagsBy` | `alphabetical` | `alphabetical` or `count-desc` |
+| `sortTagsBy` | `alphabetical` | Tag order on the index (see below) |
 | `sortGistsBy` | `updated-desc` | Newest-updated gists first on tag pages |
 | `showUpdatedDate` | `true` | Show `Updated: YYYY-MM-DD` per gist |
 | `showSecondaryTags` | `true` | Show other tags on each line |
 | `generateHtml` | `true` | Generate `docs/` HTML for GitHub Pages |
 | `generatedFileHeader` | HTML comment | Marks auto-generated Markdown (do not remove) |
+
+### `sortTagsBy` values
+
+Controls tag order on `README.md` and the HTML index (`docs/index.html`). **Untagged** is always listed last when present.
+
+| Value | Sort order |
+|-------|------------|
+| `alphabetical` | Same as `alphabetical-desc` (default) |
+| `alphabetical-desc` | Tag name Z → A |
+| `alphabetical-asc` | Tag name A → Z |
+| `count` | Same as `count-desc` |
+| `count-desc` | Most gists first; ties broken A → Z |
+| `count-asc` | Fewest gists first; ties broken A → Z |
+
+Example:
+
+```json
+"sortTagsBy": "count-desc"
+```
 
 ---
 

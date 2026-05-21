@@ -2,7 +2,7 @@
   "username": "adrenak",
   "includePrivate": false,
   "includeUntagged": true,
-  "sortTagsBy": "alphabetical",
+  "sortTagsBy": "count",
   "sortGistsBy": "updated-desc",
   "showUpdatedDate": true,
   "showSecondaryTags": true,

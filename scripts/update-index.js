@@ -158,10 +158,32 @@ function sortGists(gists, sortGistsBy) {
 
 function sortTags(tagEntries, sortTagsBy) {
   const sorted = [...tagEntries];
-  if (sortTagsBy === "alphabetical") {
-    sorted.sort((a, b) => a.tag.localeCompare(b.tag));
-  } else if (sortTagsBy === "count-desc") {
-    sorted.sort((a, b) => b.gists.length - a.gists.length || a.tag.localeCompare(b.tag));
+  const key =
+    sortTagsBy === "alphabetical"
+      ? "alphabetical-desc"
+      : sortTagsBy === "count"
+        ? "count-desc"
+        : sortTagsBy;
+
+  switch (key) {
+    case "alphabetical-desc":
+      sorted.sort((a, b) => b.tag.localeCompare(a.tag));
+      break;
+    case "alphabetical-asc":
+      sorted.sort((a, b) => a.tag.localeCompare(b.tag));
+      break;
+    case "count-desc":
+      sorted.sort(
+        (a, b) =>
+          b.gists.length - a.gists.length || a.tag.localeCompare(b.tag)
+      );
+      break;
+    case "count-asc":
+      sorted.sort(
+        (a, b) =>
+          a.gists.length - b.gists.length || a.tag.localeCompare(b.tag)
+      );
+      break;
   }
   return sorted;
 }
