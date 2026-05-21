@@ -8,4 +8,6 @@ You can just fork this repo and `github.com/<your_username>/gists` would show _y
 
 ## Tags
 
-_Run the update workflow or `npm run update` after configuring `config.json` to generate the index._
+_Last updated: 2026-05-21 15:15 UTC_
+
+- [Untagged](tags/untagged.md) — 5 gists
