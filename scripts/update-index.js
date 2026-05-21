@@ -189,9 +189,12 @@ async function renderTemplate(templateName, placeholders) {
     return null;
   }
 
-  if (!template.includes(GENERATED_MARKER)) {
+  const hasSlot =
+    template.includes("[GENERATED_TAGS]") ||
+    template.includes("[GENERATED]");
+  if (!hasSlot) {
     console.warn(
-      `Template ${templateName} is missing ${GENERATED_MARKER}; using built-in layout.`
+      `Template ${templateName} is missing [GENERATED_TAGS] or [GENERATED]; using built-in layout.`
     );
     return null;
   }
@@ -201,35 +204,40 @@ async function renderTemplate(templateName, placeholders) {
     result = result.split(`[${key}]`).join(value);
   }
 
-  if (result.includes(GENERATED_MARKER)) {
+  if (result.includes("[GENERATED_TAGS]") || result.includes("[GENERATED]")) {
     console.warn(
-      `Template ${templateName} still contains ${GENERATED_MARKER} after render.`
+      `Template ${templateName} still has unreplaced placeholders after render.`
     );
   }
 
   return result.endsWith("\n") ? result : `${result}\n`;
 }
 
-function buildReadmeGenerated(tagEntries, updatedAt) {
-  const lines = [`_Last updated: ${updatedAt}_`, ""];
+function gistHasNoTags(gist) {
+  return parseGistDescription(gist.description, gist).tags.length === 0;
+}
 
+function buildTagListMarkdown(tagEntries) {
   if (tagEntries.length === 0) {
-    lines.push("_No gists found._");
-  } else {
-    for (const { tag, gists } of tagEntries) {
-      const name = tag === UNTAGGED_KEY ? UNTAGGED_LABEL : tag;
-      const count = gists.length;
-      const countLabel = count === 1 ? "gist" : "gists";
-      lines.push(`- [${name}](${tagPageHref(tag)}) — ${count} ${countLabel}`);
-    }
+    return "_No gists found._";
   }
 
+  const lines = [];
+  for (const { tag, gists } of tagEntries) {
+    const name = tag === UNTAGGED_KEY ? UNTAGGED_LABEL : tag;
+    const count = gists.length;
+    const countLabel = count === 1 ? "gist" : "gists";
+    lines.push(`- [${name}](${tagPageHref(tag)}) — ${count} ${countLabel}`);
+  }
   return lines.join("\n");
 }
 
 function buildTagPageGenerated(tag, gists, config) {
-  const sorted = sortGists(gists, config.sortGistsBy);
   const isUntagged = tag === UNTAGGED_KEY;
+  let sorted = sortGists(gists, config.sortGistsBy);
+  if (isUntagged) {
+    sorted = sorted.filter(gistHasNoTags);
+  }
 
   if (sorted.length === 0) {
     return isUntagged ? "_No untagged gists._" : "_No gists with this tag._";
@@ -280,8 +288,14 @@ async function generateReadme(tagMap, config, updatedAt) {
     tagEntries.push({ tag: UNTAGGED_KEY, gists: untaggedGists });
   }
 
-  const generated = buildReadmeGenerated(tagEntries, updatedAt);
-  const fromTemplate = await renderTemplate("README.md", { GENERATED: generated });
+  const tagList = buildTagListMarkdown(tagEntries);
+  const displayUser = config.username || "your";
+  const fromTemplate = await renderTemplate("README.md", {
+    USERNAME: displayUser,
+    LAST_UPDATED: updatedAt,
+    GENERATED_TAGS: tagList,
+    GENERATED: `_Last updated: ${updatedAt}_\n\n${tagList}`,
+  });
   if (fromTemplate) return fromTemplate;
 
   const header = config.generatedFileHeader;
@@ -290,11 +304,13 @@ async function generateReadme(tagMap, config, updatedAt) {
     "",
     "# Gists",
     "",
-    "A browsable index of my GitHub Gists.",
+    `A browsable index of ${displayUser}'s GitHub Gists.`,
     "",
     "See [HELP.md](HELP.md) for setup and how this repo works.",
     "",
-    generated,
+    `_Last updated: ${updatedAt}_`,
+    "",
+    tagList,
     "",
   ].join("\n");
 }
@@ -414,8 +430,11 @@ async function main() {
     }
   }
 
-  if (config.includeUntagged && untaggedGists.length > 0) {
-    tagMap.set(UNTAGGED_KEY, untaggedGists);
+  if (config.includeUntagged) {
+    const onlyUntagged = untaggedGists.filter(gistHasNoTags);
+    if (onlyUntagged.length > 0) {
+      tagMap.set(UNTAGGED_KEY, onlyUntagged);
+    }
   }
 
   const now = new Date();
@@ -460,7 +479,16 @@ async function main() {
       UNTAGGED_LABEL,
       UNTAGGED_SLUG,
     };
-    if (await generateHtmlSite(tagMap, config, updatedAt, DOCS_DIR, htmlHelpers)) {
+    if (
+      await generateHtmlSite(
+        tagMap,
+        config,
+        updatedAt,
+        DOCS_DIR,
+        ROOT,
+        { ...htmlHelpers, gistHasNoTags }
+      )
+    ) {
       changed = true;
     }
   }

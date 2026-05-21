@@ -8,4 +8,6 @@ You can just fork this repo and `github.com/<your_username>/gists` would show _y
 
 ## Tags
 
-[GENERATED]
+_Last updated: [LAST_UPDATED]_
+
+[GENERATED_TAGS]

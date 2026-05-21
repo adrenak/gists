@@ -2,46 +2,16 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 const HTML_MARKER = "<!-- gists-index:auto -->";
+const CSS_MARKER = "/* gists-index:auto */";
+const TEMPLATES_DIR_NAME = "templates";
 
-const STYLES = `/* gists-index */
-:root { color-scheme: light dark; }
-* { box-sizing: border-box; }
-body {
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-  line-height: 1.5;
-  max-width: 42rem;
-  margin: 0 auto;
-  padding: 1.5rem 1rem 3rem;
-  color: #1a1a1a;
-  background: #fafafa;
-}
-@media (prefers-color-scheme: dark) {
-  body { color: #e8e8e8; background: #111; }
-  a { color: #7eb8ff; }
-  .meta, .updated, .count { color: #999; }
-}
-a { color: #0969da; }
-a:hover { text-decoration: underline; }
-h1 { font-size: 1.5rem; font-weight: 600; margin: 0 0 0.25rem; }
-.subtitle, .updated { color: #666; font-size: 0.875rem; margin: 0 0 1.5rem; }
-.back { font-size: 0.875rem; margin-bottom: 1rem; display: inline-block; }
-.tag-list, .gist-list { list-style: none; padding: 0; margin: 0; }
-.tag-list li, .gist-list li {
-  padding: 0.6rem 0;
-  border-bottom: 1px solid #e8e8e8;
-}
-@media (prefers-color-scheme: dark) {
-  .tag-list li, .gist-list li { border-color: #333; }
-}
-.tag-list a { font-weight: 500; }
-.count { color: #666; font-size: 0.875rem; }
-.gist-list a { font-weight: 500; }
-.about { color: #444; }
-@media (prefers-color-scheme: dark) { .about { color: #bbb; } }
-.meta { font-size: 0.8rem; color: #666; margin-top: 0.2rem; }
-.empty { color: #666; font-style: italic; }
-footer { margin-top: 2rem; font-size: 0.75rem; color: #888; }
-`;
+const PAGES_DEFAULTS = {
+  backgroundColor: "#fafafa",
+  textColor: "#1a1a1a",
+  textColorSecondary: "#666666",
+  linkColor: "#0969da",
+  borderColor: "#e8e8e8",
+};
 
 function escapeHtml(text) {
   return String(text)
@@ -49,6 +19,87 @@ function escapeHtml(text) {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
+}
+
+export async function loadPagesTheme(rootDir) {
+  const pagesPath = path.join(rootDir, "pages.json");
+  try {
+    const raw = await fs.readFile(pagesPath, "utf8");
+    return { ...PAGES_DEFAULTS, ...JSON.parse(raw) };
+  } catch {
+    return { ...PAGES_DEFAULTS };
+  }
+}
+
+function buildStyles(theme) {
+  const bg = theme.backgroundColor;
+  const text = theme.textColor;
+  const secondary = theme.textColorSecondary;
+  const link = theme.linkColor;
+  const border = theme.borderColor;
+
+  return `${CSS_MARKER}
+/* gists-index — customize via pages.json */
+:root {
+  color-scheme: light dark;
+  --bg: ${bg};
+  --text: ${text};
+  --text-secondary: ${secondary};
+  --link: ${link};
+  --border: ${border};
+}
+* { box-sizing: border-box; }
+body {
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  line-height: 1.5;
+  max-width: 42rem;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+  color: var(--text);
+  background: var(--bg);
+}
+a { color: var(--link); }
+a:hover { text-decoration: underline; }
+h1 { font-size: 1.5rem; font-weight: 600; margin: 0 0 0.5rem; }
+.intro, .subtitle, .updated { color: var(--text-secondary); font-size: 0.9375rem; margin: 0 0 1rem; }
+.intro a { color: var(--link); font-weight: 500; }
+.back { font-size: 0.875rem; margin-bottom: 1rem; display: inline-block; color: var(--link); }
+.tag-list, .gist-list { list-style: none; padding: 0; margin: 0; }
+.tag-list li, .gist-list li {
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.tag-list a { font-weight: 500; }
+.count { color: var(--text-secondary); font-size: 0.875rem; }
+.gist-list a { font-weight: 500; }
+.about { color: var(--text-secondary); }
+.meta { font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.2rem; }
+.empty { color: var(--text-secondary); font-style: italic; }
+footer { margin-top: 2rem; font-size: 0.75rem; color: var(--text-secondary); }
+`;
+}
+
+async function renderHtmlTemplate(templatesDir, templateName, placeholders) {
+  const templatePath = path.join(templatesDir, templateName);
+  let template;
+  try {
+    template = await fs.readFile(templatePath, "utf8");
+  } catch {
+    return null;
+  }
+
+  if (!template.includes("[GENERATED_TAGS]") && !template.includes("[GENERATED]")) {
+    console.warn(
+      `Template ${templateName} missing [GENERATED_TAGS]; using built-in HTML layout.`
+    );
+    return null;
+  }
+
+  let result = template;
+  for (const [key, value] of Object.entries(placeholders)) {
+    result = result.split(`[${key}]`).join(value);
+  }
+  return result.endsWith("\n") ? result : `${result}\n`;
 }
 
 function htmlPage({ title, subtitle, backHref, backLabel, body, username }) {
@@ -78,10 +129,33 @@ function htmlPage({ title, subtitle, backHref, backLabel, body, username }) {
 `;
 }
 
+function buildHtmlTagList(tagEntries, helpers) {
+  const { UNTAGGED_KEY, UNTAGGED_LABEL, tagHtmlSlug } = helpers;
+
+  if (tagEntries.length === 0) {
+    return `<p class="empty">No gists found.</p>`;
+  }
+
+  const items = tagEntries.map(({ tag, gists }) => {
+    const name = tag === UNTAGGED_KEY ? UNTAGGED_LABEL : tag;
+    const slug = tagHtmlSlug(tag, helpers);
+    const count = gists.length;
+    const label = count === 1 ? "gist" : "gists";
+    return `<li><a href="tags/${escapeHtml(slug)}.html">${escapeHtml(name)}</a> <span class="count">${count} ${label}</span></li>`;
+  });
+
+  return `<ul class="tag-list">${items.join("")}</ul>`;
+}
+
 function buildGistListHtml(gists, config, currentTag, helpers) {
-  const { parseGistDescription, sortGists, formatDate, UNTAGGED_KEY } = helpers;
-  const sorted = sortGists(gists, config.sortGistsBy);
+  const { parseGistDescription, sortGists, formatDate, UNTAGGED_KEY, gistHasNoTags } =
+    helpers;
   const isUntagged = currentTag === UNTAGGED_KEY;
+
+  const sorted = sortGists(gists, config.sortGistsBy).filter((gist) => {
+    if (!isUntagged) return true;
+    return gistHasNoTags(gist);
+  });
 
   if (sorted.length === 0) {
     return `<p class="empty">${isUntagged ? "No untagged gists." : "No gists with this tag."}</p>`;
@@ -115,25 +189,69 @@ function buildGistListHtml(gists, config, currentTag, helpers) {
   return `<ul class="gist-list">${items.join("")}</ul>`;
 }
 
+function buildUsernameGistsLink(username) {
+  const user = username || "your";
+  const href = `https://gist.github.com/${encodeURIComponent(user)}`;
+  return `<a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer">${escapeHtml(user)}'s GitHub Gists</a>`;
+}
+
 function tagHtmlSlug(tag, helpers) {
   const { UNTAGGED_KEY, UNTAGGED_SLUG, tagToSlug } = helpers;
   return tag === UNTAGGED_KEY ? UNTAGGED_SLUG : tagToSlug(tag);
 }
 
-/**
- * @param {Map} tagMap
- * @param {object} config
- * @param {string} updatedAt
- * @param {string} docsDir
- * @param {object} helpers - fns from update-index.js
- */
-export async function generateHtmlSite(tagMap, config, updatedAt, docsDir, helpers) {
-  const {
-    sortTags,
-    UNTAGGED_KEY,
-    UNTAGGED_LABEL,
-    tagToSlug,
-  } = helpers;
+/** Remove auto-generated HTML/CSS from docs/ before each build. */
+export async function clearGeneratedDocs(docsDir) {
+  let cleared = false;
+
+  const tagsDir = path.join(docsDir, "tags");
+  try {
+    await fs.rm(tagsDir, { recursive: true, force: true });
+    cleared = true;
+  } catch {
+    // missing
+  }
+
+  let entries;
+  try {
+    entries = await fs.readdir(docsDir, { withFileTypes: true });
+  } catch {
+    return cleared;
+  }
+
+  for (const entry of entries) {
+    if (!entry.isFile()) continue;
+    const full = path.join(docsDir, entry.name);
+    if (entry.name === "style.css") {
+      await fs.unlink(full);
+      cleared = true;
+      continue;
+    }
+    if (!entry.name.endsWith(".html")) continue;
+    const content = await fs.readFile(full, "utf8");
+    if (content.startsWith(HTML_MARKER)) {
+      await fs.unlink(full);
+      cleared = true;
+    }
+  }
+
+  if (cleared) console.log("Cleared generated files in docs/");
+  return cleared;
+}
+
+export async function generateHtmlSite(
+  tagMap,
+  config,
+  updatedAt,
+  docsDir,
+  rootDir,
+  helpers
+) {
+  const { sortTags, UNTAGGED_KEY, UNTAGGED_LABEL } = helpers;
+  const templatesDir = path.join(rootDir, TEMPLATES_DIR_NAME);
+  const theme = await loadPagesTheme(rootDir);
+
+  await clearGeneratedDocs(docsDir);
 
   const tagsDir = path.join(docsDir, "tags");
   await fs.mkdir(tagsDir, { recursive: true });
@@ -150,61 +268,64 @@ export async function generateHtmlSite(tagMap, config, updatedAt, docsDir, helpe
     tagEntries.push({ tag: UNTAGGED_KEY, gists: untaggedGists });
   }
 
-  let changed = false;
+  let changed = true;
 
   const stylePath = path.join(docsDir, "style.css");
-  if (await writeIfChanged(stylePath, STYLES)) changed = true;
+  await fs.writeFile(stylePath, buildStyles(theme), "utf8");
 
   const nojekyllPath = path.join(docsDir, ".nojekyll");
   try {
     await fs.writeFile(nojekyllPath, "", { flag: "wx" });
-    changed = true;
   } catch {
     // exists
   }
 
-  let indexBody;
-  if (tagEntries.length === 0) {
-    indexBody = `<p class="empty">No gists found.</p>`;
-  } else {
-    const items = tagEntries.map(({ tag, gists }) => {
-      const name = tag === UNTAGGED_KEY ? UNTAGGED_LABEL : tag;
-      const slug = tagHtmlSlug(tag, helpers);
-      const count = gists.length;
-      const label = count === 1 ? "gist" : "gists";
-      return `<li><a href="tags/${escapeHtml(slug)}.html">${escapeHtml(name)}</a> <span class="count">${count} ${label}</span></li>`;
+  const htmlHelpers = { ...helpers, tagHtmlSlug, UNTAGGED_KEY, UNTAGGED_LABEL };
+  const tagListHtml = buildHtmlTagList(tagEntries, htmlHelpers);
+  const displayUser = config.username || "your";
+
+  const gistsLink = buildUsernameGistsLink(config.username);
+
+  const indexFromTemplate = await renderHtmlTemplate(
+    templatesDir,
+    "index.html",
+    {
+      USERNAME: escapeHtml(displayUser),
+      GISTS_LINK: gistsLink,
+      LAST_UPDATED: escapeHtml(updatedAt),
+      GENERATED_TAGS: tagListHtml,
+    }
+  );
+
+  const indexHtml =
+    indexFromTemplate ??
+    htmlPage({
+      title: "Gists",
+      subtitle: null,
+      backHref: null,
+      backLabel: null,
+      body: `<p class="intro">A browsable index of ${gistsLink}.</p><p class="updated">Last updated: ${escapeHtml(updatedAt)}</p>${tagListHtml}`,
+      username: config.username,
     });
-    indexBody = `<p class="updated">Last updated: ${escapeHtml(updatedAt)}</p><ul class="tag-list">${items.join("")}</ul>`;
-  }
 
-  const indexHtml = htmlPage({
-    title: "Gists",
-    subtitle: "A browsable index of GitHub Gists",
-    backHref: null,
-    backLabel: null,
-    body: indexBody,
-    username: config.username,
-  });
-
-  const indexPath = path.join(docsDir, "index.html");
-  if (await writeIfChanged(indexPath, indexHtml)) changed = true;
-
-  const activeHtml = new Set(["index.html", "style.css", ".nojekyll"]);
+  await fs.writeFile(path.join(docsDir, "index.html"), indexHtml, "utf8");
 
   for (const [tag, tagGists] of tagMap) {
-    const slug = tagHtmlSlug(tag, helpers);
+    const slug = tagHtmlSlug(tag, htmlHelpers);
     const filename = `${slug}.html`;
-    activeHtml.add(`tags/${filename}`);
-
     const isUntagged = tag === UNTAGGED_KEY;
+
     const pageTitle = isUntagged
       ? "Untagged gists"
       : `Gists tagged “${tag}”`;
     const subtitle = isUntagged
-      ? "No (tags:...) in the description"
+      ? "Gists with no (tags:...) in the description"
       : null;
 
-    const body = buildGistListHtml(tagGists, config, tag, helpers);
+    const body = buildGistListHtml(tagGists, config, tag, {
+      ...htmlHelpers,
+      gistHasNoTags: helpers.gistHasNoTags,
+    });
     const pageHtml = htmlPage({
       title: pageTitle,
       subtitle,
@@ -214,58 +335,8 @@ export async function generateHtmlSite(tagMap, config, updatedAt, docsDir, helpe
       username: config.username,
     });
 
-    const tagPath = path.join(tagsDir, filename);
-    if (await writeIfChanged(tagPath, pageHtml)) changed = true;
+    await fs.writeFile(path.join(tagsDir, filename), pageHtml, "utf8");
   }
-
-  changed = (await cleanupStaleHtml(docsDir, activeHtml)) || changed;
 
   return changed;
-}
-
-async function writeIfChanged(filePath, content) {
-  try {
-    const existing = await fs.readFile(filePath, "utf8");
-    if (existing === content) return false;
-  } catch {
-    // missing
-  }
-  await fs.writeFile(filePath, content, "utf8");
-  return true;
-}
-
-async function cleanupStaleHtml(docsDir, activeRelativePaths) {
-  let removed = false;
-
-  async function scan(dir, prefix) {
-    let entries;
-    try {
-      entries = await fs.readdir(dir, { withFileTypes: true });
-    } catch {
-      return;
-    }
-
-    for (const entry of entries) {
-      const rel = prefix ? `${prefix}/${entry.name}` : entry.name;
-      const full = path.join(dir, entry.name);
-
-      if (entry.isDirectory()) {
-        await scan(full, rel);
-        continue;
-      }
-
-      if (!entry.name.endsWith(".html")) continue;
-      if (activeRelativePaths.has(rel)) continue;
-
-      const content = await fs.readFile(full, "utf8");
-      if (!content.startsWith(HTML_MARKER)) continue;
-
-      await fs.unlink(full);
-      console.log(`Removed stale HTML: docs/${rel}`);
-      removed = true;
-    }
-  }
-
-  await scan(docsDir, "");
-  return removed;
 }

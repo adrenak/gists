@@ -162,19 +162,48 @@ scripts/update-index.js → README.md + tags/*.md → auto-commit
 1. Read tags only from `(tags:tag1, tag2, ...)` (comma-separated, trimmed).
 2. Read summary from `(about:...)` if present.
 3. Remove both blocks from the description to derive the title.
-4. No `(tags:...)` → **Untagged** when `includeUntagged` is true.
+4. No `(tags:...)` → **Untagged** only (gists with at least one tag never appear there).
 
 ---
 
-## Customizing output (`templates/`)
+## Customizing output
 
-Edit `templates/README.md` and `templates/TAG.md`. Replace `[GENERATED]` with generated lists. On tag pages, `[TAG]` is the tag name.
+### Markdown (`templates/`)
 
-Optional `templates/UNTAGGED.md` for the untagged page layout (only needs `[GENERATED]`).
+| File | Placeholders |
+|------|----------------|
+| `README.md` | `[USERNAME]`, `[LAST_UPDATED]`, `[GENERATED_TAGS]` |
+| `TAG.md` | `[TAG]`, `[GENERATED]` |
+| `UNTAGGED.md` (optional) | `[GENERATED]` — only gists with **no** `(tags:...)` |
 
-**Safe to edit:** `templates/`, `HELP.md`, `config.json`, workflow, `scripts/update-index.js`
+### HTML index (`templates/index.html`)
 
-**Do not edit by hand:** `README.md`, `tags/*.md` (regenerated each run)
+| Placeholder | Replaced with |
+|-------------|----------------|
+| `[USERNAME]` | Username (plain text; e.g. footer URL) |
+| `[GISTS_LINK]` | Linked phrase: `username's GitHub Gists` → gist.github.com (new tab) |
+| `[LAST_UPDATED]` | Index run timestamp |
+| `[GENERATED_TAGS]` | HTML tag list (`<ul class="tag-list">…`) |
+
+Tag pages use built-in HTML layout (`templates/TAG.html` not required).
+
+### Colors (`pages.json`)
+
+Edit **`pages.json`** at the repo root (not overwritten by the script):
+
+| Field | Default | Used for |
+|-------|---------|----------|
+| `backgroundColor` | `#fafafa` | Page background |
+| `textColor` | `#1a1a1a` | Body text |
+| `textColorSecondary` | `#666666` | About, meta, dates, footer |
+| `linkColor` | `#0969da` | Links |
+| `borderColor` | `#e8e8e8` | List dividers |
+
+Regenerated each run: `docs/style.css` (from `pages.json`).
+
+**Safe to edit:** `templates/`, `pages.json`, `HELP.md`, `config.json`
+
+**Do not edit by hand:** `README.md`, `tags/*.md`, `docs/index.html`, `docs/tags/*.html`, `docs/style.css`
 
 ---
 
@@ -197,7 +226,8 @@ gists/
 ├── README.md              ← generated index
 ├── tags/                  ← generated Markdown tag pages
 ├── docs/                  ← generated HTML (GitHub Pages)
-├── templates/             ← customize Markdown layout
+├── templates/             ← README.md, index.html, TAG.md, …
+├── pages.json             ← HTML colors (your edits kept)
 ├── HELP.md
 ├── config.json
 ├── scripts/update-index.js
@@ -212,7 +242,9 @@ Each index run generates a minimal site under **`docs/`** (when `generateHtml` i
 2. Open **`https://<username>.github.io/<repo-name>/`** (e.g. `…/gists/` if your repo is named `gists`).
 3. Custom domains: configure in Pages settings; path stays `/` for root or use your repo name as the path segment.
 
-Gist titles open the GitHub gist in a **new tab**. Stale HTML tag pages are removed automatically when tags are dropped.
+Gist titles open the GitHub gist in a **new tab**.
+
+**`docs/` is cleared on every run** (auto-generated HTML and `style.css`), then rebuilt. Edit `templates/index.html` and `pages.json` to customize; those files are kept.
 
 ## Disclosure
 
