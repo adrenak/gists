@@ -6,6 +6,13 @@ _Back to [all tags](../README.md)._
 
 ## Gists
 
+### [Keyboard shortcut to toggle inspector lock!](https://gist.github.com/adrenak/6689804da2b9c74268519f08c57a6091)
+
+Hotkey to toggle Unity Inspector Lock! Works with multiple Inspectors
+
+- **All tags:** [devex](devex.md), [unity](unity.md), [util](util.md)
+- **Updated:** 2026-05-22
+
 ### [png2jpg-ffmpeg-help.sh](https://gist.github.com/adrenak/d81f2d6bb55f1468fc6ca260ea691542)
 
 Help section for optionless png2jpg-ffmpeg variants
@@ -46,13 +53,6 @@ Optionless png2jpg-ffmpeg variant for very high quality output
 Convert PNGs in a folder to JPGs using the CLI. Quality levels included.
 
 - **All tags:** [cli](cli.md), [image](image.md), [util](util.md)
-- **Updated:** 2026-05-21
-
-### [Keyboard shortcut to toggle inspector lock!](https://gist.github.com/adrenak/6689804da2b9c74268519f08c57a6091)
-
-Hotkey to toggle Unity Inspector Lock! Works with multiple Inspectors
-
-- **All tags:** [devex](devex.md), [unity](unity.md), [util](util.md)
 - **Updated:** 2026-05-21
 
 ### [BoxColliderEditFaceCenterDots makes resizing BoxColiders easy](https://gist.github.com/adrenak/cf6ce8f83c93789d8cc22dd3c6eab4d8)
