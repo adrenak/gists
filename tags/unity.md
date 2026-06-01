@@ -6,6 +6,13 @@ _Back to [all tags](../README.md)._
 
 ## Gists
 
+### [UVIslandExporterWindow](https://gist.github.com/adrenak/ac84b316d3168d1f669ba8ba555cea70)
+
+easily export UV maps from SkinnedMeshRenderer and MeshFilter in Unity
+
+- **All tags:** [unity](unity.md), [util](util.md)
+- **Updated:** 2026-05-31
+
 ### [Keyboard shortcut to toggle inspector lock!](https://gist.github.com/adrenak/6689804da2b9c74268519f08c57a6091)
 
 Hotkey to toggle Unity Inspector Lock! Works with multiple Inspectors
