@@ -11,7 +11,7 @@ _Back to [all tags](../README.md)._
 Hotkey to toggle Unity Inspector Lock! Works with multiple Inspectors
 
 - **All tags:** [devex](devex.md), [unity](unity.md), [util](util.md)
-- **Updated:** 2026-05-22
+- **Updated:** 2026-06-15
 
 ### [BoxColliderEditFaceCenterDots makes resizing BoxColiders easy](https://gist.github.com/adrenak/cf6ce8f83c93789d8cc22dd3c6eab4d8)
 
