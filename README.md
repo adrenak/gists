@@ -12,7 +12,7 @@ Then `github.com/<your_username>/gists` would show _your_ gists too! See [HELP.m
 
 ## Tags
 
-_Last updated: 2026-08-05 02:54 UTC_
+_Last updated: 2026-08-06 03:11 UTC_
 
 - [util](tags/util.md) — 15 gists
 - [cli](tags/cli.md) — 12 gists
